@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>CSCI2720 Project</title>
+    <link rel="stylesheet" href="https://cdn.concisecss.com/concise.min.css">
+    <link rel="stylesheet" href="https://cdn.concisecss.com/concise-utils/concise-utils.min.css">
+    <link rel="stylesheet" href="https://cdn.concisecss.com/concise-ui/concise-ui.min.css">
+    <link rel="stylesheet" href="screen.css">
+  </head>
+  <body>
+    <header class="_bg-background-dark _c-text-inverted _ps">
+      <ul id="nav">
+        <li>Login Page</li>
+      </ul>
+    </header>
+    <main class="_m0" grid="column center justify-center">
+      <form grid action="/login" method="post">
+        <input type="text" placeholder="Username" name="username" column>
+        <input type="password" placeholder="Password" name="password" column>
+        <input type="submit" value="Login" column>
+      </form>
+      <p class="_c-state-error"></p>
+    </main>
+    <script>
+      var err = new URLSearchParams(location.search).get('error');
+      document.querySelector('p').textContent = err
+    </script>
+  </body>
+</html>

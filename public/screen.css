@@ -1,0 +1,45 @@
+body {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+header {
+  height: 3rem;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+main {
+  height: calc(100% - 3rem);
+}
+
+#nav { list-style-type: none; }
+#nav li { float: left; }
+#nav li:not(:first-child)::before {
+  content: "/ ";
+  margin-left: 0.35rem;
+}
+
+.upload-button {
+  display: inline-block;
+  overflow: visible;
+  text-transform: none;
+  background-color: #c65146;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: .83333rem;
+  line-height: 2.25rem;
+  padding: 0 1.5em;
+  -webkit-transition: background-color .15s;
+  transition: background-color .15s;
+  white-space: nowrap;
+}
+.upload-button:hover {
+  background-color: #cc6359;
+  text-decoration: none;
+  outline: none;
+}
