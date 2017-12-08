@@ -15,6 +15,7 @@
       </ul>
     </header>
     <main class="_m0" grid="column center justify-center">
+      <h2>CSCI2720 Item Redeem System</h2>
       <form grid action="/login" method="post">
         <input type="text" placeholder="Username" name="username" column>
         <input type="password" placeholder="Password" name="password" column>
@@ -23,8 +24,8 @@
       <p class="_c-state-error"></p>
     </main>
     <script>
-      var err = new URLSearchParams(location.search).get('error');
-      document.querySelector('p').textContent = err
+      var err = new window.URLSearchParams(window.location.search).get('error');
+      document.querySelector('p').textContent = err;
     </script>
   </body>
 </html>

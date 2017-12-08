@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>CSCI2720 Project</title>
+    <link rel="stylesheet" href="https://cdn.concisecss.com/concise.min.css">
+    <link rel="stylesheet" href="https://cdn.concisecss.com/concise-utils/concise-utils.min.css">
+    <link rel="stylesheet" href="https://cdn.concisecss.com/concise-ui/concise-ui.min.css">
+    <link rel="stylesheet" href="screen.css">
+  </head>
+  <body onload="retrieveItem()">
+    <header class="_bg-background-dark _c-text-inverted _ps">
+      <ul id="nav">
+        <li><a href="/">Logout</a></li>
+        <li id="username"></li>
+        <li>Item List</li>
+      </ul>
+      <p class="_m0">Balance: <strong id="balance"></strong></p>
+    </header>
+    <main class="_m0" grid="column center" style="overflow:auto;">
+      <div>
+        <h2>Item List</h2>
+        <ul class="button-group">
+          <li>Sort by:
+            <select id="sortValue" onchange="retrieveItem()">
+              <option value="1">Value</option>
+              <option value="0">Create Time</option>
+            </select>
+          </li>
+          <li>Sort order:
+            <select id="sortDesc" onchange="retrieveItem()">
+              <option value="1">Descending</option>
+              <option value="0">Ascending</option>
+            </select>
+          </li>
+          <li>Page:
+            <select id="page" onchange="retrieveItem()">
+              <option value="1">1</option>
+            </select>
+          </li>
+        </ul>
+      </div>
+      <div>
+        <div id="itemDiv" style="margin-top:3rem;margin-bottom:3rem;">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </main>
+    <script src="https://cdn.rawgit.com/js-cookie/js-cookie/82860ea5/src/js.cookie.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script>
+      document.querySelector('#username').innerHTML = `<a href="/user.html">${window.Cookies.get('username')}</a>`;
+      document.querySelector('#balance').textContent = window.Cookies.get('balance');
+      
+      //for retrieving item list when the page is first loaded/the sorting changes
+      function retrieveItem() {
+        
+        //get sortValue, sortDesc and page number
+        var sortValue = $('#sortValue').val();
+        var sortDesc = $('#sortDesc').val();
+        var pageNumber = $('#page').index();
+        
+        //perform ajax to request an updated item list
+        $.ajax({
+          dataType: 'json',
+          data: {
+            sortValue: sortValue === '0'? undefined : 1,
+            sortDesc: sortDesc === '0'? undefined : 1,
+            page: pageNumber
+          },
+          url: '/item',
+          type: 'GET',
+          success: function(result) {
+            $('.spinner').remove();
+            
+            var items = result.items;
+            var itemDiv = document.getElementById("itemDiv");
+            itemDiv.innerHTML = ''; // clear existing items
+            for(var i = 0; i < items.length; i++){
+              itemDiv.insertAdjacentHTML("beforeend",
+                `<table class="itemList">
+                  <tr><th>Title</th><td><a href="/item.html?id=${items[i].id}">${items[i].title}</a></td>
+                    <td><form action="/item.html" method="GET">
+                      <button>View item detail</button>
+                      <input type="hidden" name="id" value="${items[i].id}"/> 
+                    </form></td></tr>
+                  <tr><th>Value</th><td>${items[i].value}</td></tr>
+                  <tr><th>Quantity</th><td>${items[i].qty}</td></tr>
+                  <tr><th>Create-time</th><td>${items[i].create_time}</td></tr>
+                </table>`
+              );
+            }
+            
+            //update page number in the drop-down menu
+            var newPageNumber = Math.ceil(result.totalItems / 10);
+            var pageDropdown = document.getElementById("page");
+            pageDropdown.options.length = 0; // clear existing options
+            for(var j = 1; j <= newPageNumber; j++){
+              var opt = document.createElement("option");
+              opt.text = newPageNumber;
+              opt.value = newPageNumber;
+              pageDropdown.add(opt, null);
+            }
+            window.location.hash = "page=" + (pageNumber + 1);
+          },
+        });
+      }
+    </script>
+  </body>
+</html>

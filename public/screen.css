@@ -13,6 +13,7 @@ header {
   justify-content: space-between;
 }
 main {
+  width: 100%;
   height: calc(100% - 3rem);
 }
 
@@ -21,6 +22,10 @@ main {
 #nav li:not(:first-child)::before {
   content: "/ ";
   margin-left: 0.35rem;
+}
+
+td {
+  vertical-align: bottom;
 }
 
 .upload-button {
@@ -42,4 +47,8 @@ main {
   background-color: #cc6359;
   text-decoration: none;
   outline: none;
+}
+
+#item-list > table {
+  margin-bottom: 3rem;
 }

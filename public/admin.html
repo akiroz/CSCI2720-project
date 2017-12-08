@@ -17,8 +17,8 @@
     </header>
     <main class="_m0 _ps" grid="column center" container>
       <fieldset style="width:100%">
-        <legend>Add Item</legend>
-        <form action="/item" method="post" enctype="multipart/form-data">
+        <legend id="item-form-legend">Add Item</legend>
+        <form id="item-form" action="/item" method="post" enctype="multipart/form-data">
           <div grid class="_m0">
             <input column="6" type="text" placeholder="Title" name="title">
             <input column="3" type="number" placeholder="Item Cost" name="value" step="1">
@@ -26,14 +26,19 @@
           </div>
           <input type="text" placeholder="Description" name="description">
           <input type="text" placeholder="Space-Separated Tags" name="tags">
+          <img src="" style="float:right; visibility:hidden; width:50%; margin-top:0.75rem"></img>
           <label class="_mtxs upload-button">
             Upload Image: <span>None</span>
-            <input style="display:none" type="file" name="image" accept="image/png, image/jpeg">
+            <input style="display:none" type="file" name="image" accept="image/jpeg image/png">
           </label>
           <br>
-          <input class="_mtxs" type="submit" value="Add">
+          <button type="submit" class="_mtxs -success">Add</button>
+          <button type="reset" class="_mtxs -warning" onclick="cancel()" style="visibility:hidden">Cancel</button>
         </form>
       </fieldset>
+      <form action="/export" target="_blank">
+        <button class="-success">Export CSV</button>
+      </form>
       <section id="item-list" style="width:100%">
         <div class="spinner"></div>
       </section>
@@ -41,13 +46,18 @@
       <br>
     </main>
     <script>
-      fetch('/item').then(r => r.json()).then(items => {
+      window.fetch('/item').then(r => r.json()).then(({items}) => {
+        window.items = items; // save for later use
         var itemRows = items.map(({id, title, value, qty, create_time}) => `
-          <tr data-id=${id}>
+          <tr>
             <td>${title}</td>
             <td>${value}</td>
             <td>${qty}</td>
             <td>${create_time}</td>
+            <td>
+              <button onclick="edit(${id})" class="-bordered -warning">Edit</button>
+              <button onclick="remove(${id})" class="-bordered -error">Remove</button>
+            </td>
           </tr>
         `);
         var noItems = `
@@ -65,6 +75,7 @@
                 <th>Value</th>
                 <th>Qty</th>
                 <th>Creation Time</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -73,9 +84,47 @@
           </table>
         `);
       });
+      
+      // file-select update file name
       document.querySelector('.upload-button > input').onchange = e => {
         document.querySelector('.upload-button > span').textContent = e.target.files[0].name;
+      };
+      
+      function remove(id) {
+        if(window.confirm('Are you sure you want to delete this item?')) {
+          window
+            .fetch(`/item/${id}`, {method: 'DELETE'})
+            .then(_ => window.location.reload());
+        }
       }
+      
+      function edit(id) {
+        window.fetch(`/item/${id}`).then(r => r.json()).then(item => {
+          document.querySelector('#item-form-legend').textContent = 'Edit Item';
+          document.querySelector('#item-form input[name=title]').value = item.title;
+          document.querySelector('#item-form input[name=value]').value = item.value;
+          document.querySelector('#item-form input[name=qty]').value = item.qty;
+          document.querySelector('#item-form input[name=description]').value = item.description;
+          document.querySelector('#item-form input[name=tags]').value = item.tags.join(' ');
+          document.querySelector('#item-form button[type=submit]').textContent = 'Update';
+          document.querySelector('#item-form button[type=reset]').style.visibility = 'visible';
+          document.querySelector('#item-form').setAttribute('action', `/item/${item.id}`);
+          if(item.image) {
+            document.querySelector('#item-form img').style.visibility = 'visible';
+            document.querySelector('#item-form img').setAttribute('src', `data:image;base64,${item.image}`);
+          }
+        });
+      }
+      
+      function cancel() {
+        document.querySelector('#item-form-legend').textContent = 'Add Item';
+        document.querySelector('#item-form button[type=submit]').textContent = 'Add';
+        document.querySelector('#item-form button[type=reset]').style.visibility = 'hidden';
+        document.querySelector('#item-form img').style.visibility = 'hidden';
+        document.querySelector('#item-form img').setAttribute('src', '');
+        document.querySelector('#item-form').setAttribute('action', '/item');
+      }
+      
     </script>
   </body>
 </html>

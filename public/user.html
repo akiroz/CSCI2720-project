@@ -16,13 +16,17 @@
       </ul>
       <p class="_m0">Balance: <strong id="balance"></strong></p>
     </header>
-    <main class="_m0" grid="column center justify-center">
+    <main class="_m0" grid="column center">
+      <h2>User Page</h2>
       <div class="spinner"></div>
+      <form action="/item_list.html">
+        <button>Item List :< </button>
+      </form>
     </main>
     <script src="https://cdn.rawgit.com/js-cookie/js-cookie/82860ea5/src/js.cookie.js"></script>
     <script>
-      document.querySelector('#username').textContent = Cookies.get('username');
-      document.querySelector('#balance').textContent = Cookies.get('balance');
+      document.querySelector('#username').textContent = window.Cookies.get('username');
+      document.querySelector('#balance').textContent = window.Cookies.get('balance');
     </script>
   </body>
 </html>
