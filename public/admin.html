@@ -16,6 +16,7 @@
       </ul>
     </header>
     <main class="_m0 _ps" grid="column center" container>
+      <a name="form"></a>
       <fieldset style="width:100%">
         <legend id="item-form-legend">Add Item</legend>
         <form id="item-form" action="/item" method="post" enctype="multipart/form-data">
@@ -98,6 +99,7 @@
       }
       
       function edit(id) {
+        window.location.href = '#form';
         window.fetch(`/item/${id}`).then(r => r.json()).then(item => {
           document.querySelector('#item-form-legend').textContent = 'Edit Item';
           document.querySelector('#item-form input[name=title]').value = item.title;
