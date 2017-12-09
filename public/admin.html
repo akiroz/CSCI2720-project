@@ -47,7 +47,6 @@
     </main>
     <script>
       window.fetch('/item').then(r => r.json()).then(({items}) => {
-        window.items = items; // save for later use
         var itemRows = items.map(({id, title, value, qty, create_time}) => `
           <tr>
             <td>${title}</td>
@@ -62,7 +61,7 @@
         `);
         var noItems = `
           <tr>
-            <td colspan=4>No Items</td>
+            <td colspan=5>No Items</td>
           </tr>
         `;
         document.querySelector('.spinner').remove();

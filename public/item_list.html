@@ -79,11 +79,7 @@
             for(var i = 0; i < items.length; i++){
               itemDiv.insertAdjacentHTML("beforeend",
                 `<table class="itemList">
-                  <tr><th>Title</th><td><a href="/item.html?id=${items[i].id}">${items[i].title}</a></td>
-                    <td><form action="/item.html" method="GET">
-                      <button>View item detail</button>
-                      <input type="hidden" name="id" value="${items[i].id}"/> 
-                    </form></td></tr>
+                  <tr><th>Title</th><td><a href="/item.html?id=${items[i].id}">${items[i].title}</a></td></tr>
                   <tr><th>Value</th><td>${items[i].value}</td></tr>
                   <tr><th>Quantity</th><td>${items[i].qty}</td></tr>
                   <tr><th>Create-time</th><td>${items[i].create_time}</td></tr>

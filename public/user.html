@@ -17,16 +17,53 @@
       <p class="_m0">Balance: <strong id="balance"></strong></p>
     </header>
     <main class="_m0" grid="column center">
-      <h2>User Page</h2>
-      <div class="spinner"></div>
-      <form action="/item_list.html">
-        <button>Item List :< </button>
+      <form action="/item_list.html" style="margin:1rem">
+        <button>Item List</button>
       </form>
+      <h2>User Redemptions</h2>
+      <section id="redeem-list">
+        <div class="spinner"></div>
+      </section>
     </main>
     <script src="https://cdn.rawgit.com/js-cookie/js-cookie/82860ea5/src/js.cookie.js"></script>
     <script>
       document.querySelector('#username').textContent = window.Cookies.get('username');
       document.querySelector('#balance').textContent = window.Cookies.get('balance');
+      
+      window
+      .fetch('/redeem', {credentials: "same-origin"})
+      .then(r => r.json()).then(redeems => {
+        var redeemRows = redeems.map(({title, value, redeem_time}, idx) => `
+          <tr>
+            <td>${idx}</td>
+            <td>${redeem_time}</td>
+            <td>${title}</td>
+            <td>${value}</td>
+          </tr>
+        `);
+        var noItems = `
+          <tr>
+            <td colspan=4>No Items</td>
+          </tr>
+        `;
+        document.querySelector('.spinner').remove();
+        document.querySelector('#redeem-list').insertAdjacentHTML(
+          'beforeend', `
+          <table style="width:100%">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Redeem Time</th>
+                <th>Title</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${redeemRows.length ? redeemRows.join('') : noItems}
+            </tbody>
+          </table>
+        `);
+      });
     </script>
   </body>
 </html>

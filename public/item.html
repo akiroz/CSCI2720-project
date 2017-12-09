@@ -56,6 +56,7 @@
           }
           document.querySelector('#item_nav').textContent = item.title;
           document.querySelector('.spinner').remove();
+          var tags = item.tags.map(t => `<span class="tag-box -success" style="margin:0.2rem">${t}</span>`);
           document.getElementById("item").insertAdjacentHTML("beforeend",
           `
             <table class="_b3" style="margin-bottom:3rem">
@@ -81,7 +82,7 @@
               </tr>
               <tr class="_b1">
                 <th class="_b1">Tags :</th>
-                <td>${item.tags}</td>
+                <td>${tags.join('')}</td>
               </tr>
               <tr class="_b1">
                 <th class="_b1">Image :</th>
