@@ -11,7 +11,7 @@
   <body onload="retrieveItem()">
     <header class="_bg-background-dark _c-text-inverted _ps">
       <ul id="nav">
-        <li><a href="/">Logout</a></li>
+        <li><a href="/logout">Logout</a></li>
         <li id="username"></li>
         <li>Item List</li>
       </ul>
@@ -58,15 +58,17 @@
         //get sortValue, sortDesc and page number
         var sortValue = $('#sortValue').val();
         var sortDesc = $('#sortDesc').val();
-        var pageNumber = $('#page').index();
-        
+        var pageNumber = $('#page').val();
+        //var pageee = document.getElementById('page').options[pageNumber].value;
+        console.log(pageNumber);
+        //console.log("page="+pageee);
         //perform ajax to request an updated item list
         $.ajax({
           dataType: 'json',
           data: {
             sortValue: sortValue === '0'? undefined : 1,
             sortDesc: sortDesc === '0'? undefined : 1,
-            page: pageNumber
+            page: (pageNumber - 1),
           },
           url: '/item',
           type: 'GET',
@@ -93,12 +95,22 @@
             pageDropdown.options.length = 0; // clear existing options
             for(var j = 1; j <= newPageNumber; j++){
               var opt = document.createElement("option");
-              opt.text = newPageNumber;
-              opt.value = newPageNumber;
+              opt.text = j;
+              opt.value = j;
               pageDropdown.add(opt, null);
             }
-            window.location.hash = "page=" + (pageNumber + 1);
+            pageDropdown.value = pageNumber;
+            window.location.hash = "page=" + (pageNumber);
+            
           },
+          error: function(err){
+            console.log(err);
+            if (err.status == 403){
+              document.querySelector('.spinner').remove();
+              window.location.replace('/');
+              alert("Please Login First");
+            }
+          }
         });
       }
     </script>

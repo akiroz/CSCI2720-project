@@ -11,7 +11,7 @@
   <body>
     <header class="_bg-background-dark _c-text-inverted _ps">
       <ul id="nav">
-        <li><a href="/">Logout</a></li>
+        <li><a href="/logout">Logout</a></li>
         <li id="username"></li>
       </ul>
       <p class="_m0">Balance: <strong id="balance"></strong></p>
@@ -32,10 +32,17 @@
       
       window
       .fetch('/redeem', {credentials: "same-origin"})
-      .then(r => r.json()).then(redeems => {
+      .then(r => {
+        if (r.status == 403){
+          throw "no login";
+        }else{
+          return r.json();
+        }
+      })
+      .then(redeems => {
         var redeemRows = redeems.map(({title, value, redeem_time}, idx) => `
           <tr>
-            <td>${idx}</td>
+            <td>${idx + 1}</td>
             <td>${redeem_time}</td>
             <td>${title}</td>
             <td>${value}</td>
@@ -63,6 +70,12 @@
             </tbody>
           </table>
         `);
+      })
+      .catch(err=>{
+        console.log(err);
+        document.querySelector('.spinner').remove();
+        window.location.replace('/');
+        alert("Please Login First");
       });
     </script>
   </body>

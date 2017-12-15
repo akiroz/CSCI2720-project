@@ -11,7 +11,7 @@
   <body>
     <header class="_bg-background-dark _c-text-inverted _ps">
       <ul id="nav">
-        <li><a href="/">Logout</a></li>
+        <li><a href="/logout">Logout</a></li>
         <li>admin</li>
       </ul>
     </header>
@@ -25,7 +25,8 @@
             <input column="3" type="number" placeholder="Item Cost" name="value" step="1">
             <input column="3" type="number" placeholder="Available Qty" name="qty" step="1">
           </div>
-          <input type="text" placeholder="Description" name="description">
+          <input type="text" placeholder="Description : only HTML elements “b”, “i”, “u”, “pre”, “p”, and
+“br” are allowed, anything else would be treated as plain text." name="description">
           <input type="text" placeholder="Space-Separated Tags" name="tags">
           <img src="" style="float:right; visibility:hidden; width:50%; margin-top:0.75rem"></img>
           <label class="_mtxs upload-button">
@@ -47,7 +48,15 @@
       <br>
     </main>
     <script>
-      window.fetch('/item').then(r => r.json()).then(({items}) => {
+      window.fetch('/item?all=true',{credentials: 'same-origin'})
+      .then(r => {
+        if (r.status == 403){
+          throw "no login"
+        }else{
+          return r.json();
+        }
+      })
+      .then(({items}) => {
         var itemRows = items.map(({id, title, value, qty, create_time}) => `
           <tr>
             <td>${title}</td>
@@ -83,6 +92,13 @@
             </tbody>
           </table>
         `);
+      })
+      .catch(err=>{
+        console.log(err);
+          if(err === "no login"){
+            window.location.replace('/');
+            alert("Please Login First");
+          }
       });
       
       // file-select update file name
@@ -93,14 +109,14 @@
       function remove(id) {
         if(window.confirm('Are you sure you want to delete this item?')) {
           window
-            .fetch(`/item/${id}`, {method: 'DELETE'})
+            .fetch(`/item/${id}`, {method: 'DELETE' , credentials: 'same-origin'})
             .then(_ => window.location.reload());
         }
       }
       
       function edit(id) {
         window.location.href = '#form';
-        window.fetch(`/item/${id}`).then(r => r.json()).then(item => {
+        window.fetch(`/item/${id}`,{credentials: 'same-origin'}).then(r => r.json()).then(item => {
           document.querySelector('#item-form-legend').textContent = 'Edit Item';
           document.querySelector('#item-form input[name=title]').value = item.title;
           document.querySelector('#item-form input[name=value]').value = item.value;
@@ -125,7 +141,6 @@
         document.querySelector('#item-form img').setAttribute('src', '');
         document.querySelector('#item-form').setAttribute('action', '/item');
       }
-      
     </script>
   </body>
 </html>

@@ -11,7 +11,7 @@
   <body>
     <header class="_bg-background-dark _c-text-inverted _ps">
       <ul id="nav">
-        <li><a href="/">Logout</a></li>
+        <li><a href="/logout">Logout</a></li>
         <li id="username"></li>
         <li><a href="/item_list.html">Item List</a></li>
         <li id="item_nav"></li>
@@ -46,8 +46,14 @@
       console.log(path);
 
       window
-        .fetch(path,{method:'GET'})
-        .then(res=>res.json())
+        .fetch(path,{method:'GET', credentials: 'same-origin'})
+        .then(r => {
+          if (r.status == 403){
+            throw "no login";
+          }else{
+            return r.json();
+          }
+        })
         .then(item=>{
           console.log(item);
           if (item.image === null){
@@ -101,10 +107,21 @@
         })
         .catch(err=>{
           console.log(err);
-          document.getElementById("item").insertAdjacentHTML("beforeend",
-          `
-          <h2>Ooooooops! Item not found sosad</h2>
-          `);
+          if(err === "no login"){
+            window.location.replace('/');
+            alert("Please Login First");
+          }
+          else{
+            document.querySelector(".spinner").remove();
+            document.getElementById("item").insertAdjacentHTML("beforeend",
+            `
+            
+            <section class="alert-box -error">
+              <h2>Ooooooops! Item not found sosad</h2>
+              <a class="close" href="/item_list.html">x</a>
+            </section>
+            `);
+          }
         });
         
       function checkRedeem(qty, value){

@@ -6,6 +6,7 @@ var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser')
 var fileUpload = require('express-fileupload');
 var csvStringify = require('csv-stringify');
+var session = require('express-session')
 
 // config database
 var db = mysql.createConnection({
@@ -23,6 +24,38 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(fileUpload());
 
+//function used to constraint html elements input =========
+function strip_tags(input, allowed) {
+  allowed = (((allowed || '') + '')
+  .toLowerCase()
+  .match(/<[a-z][a-z0-9]*>/g) || [])
+  .join('');
+  var tags = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi,
+  commentsAndPhpTags = /<!--[\s\S]*?-->|<\?(?:php)?[\s\S]*?\?>/gi;
+  return input.replace(commentsAndPhpTags, '')
+  .replace(tags, function($0, $1) {
+    return allowed.indexOf('<' + $1.toLowerCase() + '>') > -1 ? $0 : '';
+  });
+}
+
+// Session ================================================
+app.use( session({
+    secret: 'mysecretkey',
+    cookie:{maxAge:null},
+    resave: false,
+    saveUninitialized: false})
+);
+
+function checkAuth(req,res,next){
+  if (!req.session.username){
+    console.log(req.session.username)
+    console.log('no login');
+    res.status(403).send("please login first");
+  }else{
+    next();
+  }
+}
+
 // Login ==============================================
 app.post('/login', (req, res) => {
   var username = req.body.username;
@@ -38,12 +71,23 @@ app.post('/login', (req, res) => {
       if(results.length) {
         if(username === 'admin') {
           // login as admin
-          res.redirect('/admin.html');
+          req.session.regenerate(()=>{
+            req.session.username = username;
+            res.redirect('/admin.html');
+          });
+          //res.redirect('/admin.html');
         } else {
           // login as normal user
-          res.cookie('username', username);
-          res.cookie('balance', results[0].balance);
-          res.redirect('/user.html');
+          req.session.regenerate(()=>{
+            req.session.username = username;
+            res.cookie('username', username);
+            res.cookie('balance', results[0].balance);
+            res.redirect('/user.html');
+          });
+          //res.cookie('username', username);
+          //res.cookie('balance', results[0].balance);
+          //res.redirect('/user.html');
+        
         }
       } else {
         // login failed
@@ -57,8 +101,17 @@ app.post('/login', (req, res) => {
   );
 });
 
+// Logout =========================================
+app.get('/logout',(req,res)=>{
+  req.session.destroy(()=>{
+    res.clearCookie("username");
+    res.clearCookie("balance");
+    res.redirect('/');
+  });
+})
+
 // Create Item ==============================================
-app.post('/item', (req, res) => {
+app.post('/item',checkAuth, (req, res) => {
   var { title, description, value, qty, tags } = req.body;
   var {
     image: {
@@ -66,9 +119,10 @@ app.post('/item', (req, res) => {
     } = {}
   } = req.files || {};
   var tagStr = JSON.stringify(tags.split(' '));
+  var striped_description = strip_tags(description,"<b><i><u><pre><p><br>");
   db.query(
     `INSERT INTO item (title, description, image, value, qty, tags) VALUES (?,?,?,?,?,?)`,
-    [ title, description, imageData, value, qty, tagStr ],
+    [ title, striped_description, imageData, value, qty, tagStr ],
     err => {
       if(err) throw err;
       // redirect back to previous page
@@ -78,11 +132,25 @@ app.post('/item', (req, res) => {
 });
 
 // Retreve Item List ==============================================
-app.get('/item', (req, res) => {
-  var { sortDesc, sortValue, page = 0 } = req.query;
+app.get('/item',checkAuth, (req, res) => {
+  var { sortDesc, sortValue, page = 0, all = false} = req.query;
   var sortField = sortValue ? 'value' : 'create_time';
   var sortOrder = sortDesc ? 'DESC' : 'ASC';
-  db.query(
+  console.log("Item list session : " + req.session.username);
+  if (all){
+    db.query(
+    `SELECT id, title, value, qty, create_time FROM item ORDER BY ${sortField} ${sortOrder} `, 
+    (err, items) => {
+      if(err) throw err;
+      db.query('SELECT COUNT(*) AS totalItems FROM item', (err, [{totalItems}]) => {
+        if(err) throw err;
+        res.json({ items, totalItems });
+      });
+    }
+  );
+  }
+  else{
+    db.query(
     `SELECT id, title, value, qty, create_time FROM item ORDER BY ${sortField} ${sortOrder} LIMIT 10 OFFSET ?`,
     [ page*10 ], (err, items) => {
       if(err) throw err;
@@ -92,11 +160,13 @@ app.get('/item', (req, res) => {
       });
     }
   );
+  }
 });
 
 // Retreve Item ==============================================
-app.get('/item/:id', (req, res) => {
+app.get('/item/:id',checkAuth, (req, res) => {
   var { id } = req.params;
+  console.log("Item view session : " + req.session.username);
   db.query(
     'SELECT * FROM item WHERE id = ?', [ id ],
     (err, [item]) => {
@@ -115,7 +185,7 @@ app.get('/item/:id', (req, res) => {
 });
 
 // Update Item ==============================================
-app.post('/item/:id', (req, res) => {
+app.post('/item/:id',checkAuth, (req, res) => {
   var { id } = req.params;
   var { title, description, value, qty, tags } = req.body;
   var {
@@ -124,9 +194,10 @@ app.post('/item/:id', (req, res) => {
     } = {}
   } = req.files || {};
   var tagStr = JSON.stringify(tags.split(' '));
+  var striped_description = strip_tags(description,"<b><i><u><pre><p><br>");
   db.query(
     'UPDATE item SET title=?, description=?, image=?, value=?, qty=?, tags=? WHERE id=?',
-    [ title, description, imageData, value, qty, tagStr, id ],
+    [ title, striped_description, imageData, value, qty, tagStr, id ],
     err => {
       if(err) throw err;
       // redirect back to previous page
@@ -136,7 +207,7 @@ app.post('/item/:id', (req, res) => {
 });
 
 // Delete Item ==============================================
-app.delete('/item/:id', (req, res) => {
+app.delete('/item/:id',checkAuth, (req, res) => {
   var { id } = req.params;
   db.query('DELETE FROM item WHERE id=?', [id], err => {
     if(err) throw err;
@@ -145,7 +216,7 @@ app.delete('/item/:id', (req, res) => {
 });
 
 // Redeem List =============================================
-app.get('/redeem', (req, res) => {
+app.get('/redeem',checkAuth, (req, res) => {
   var { username } = req.cookies;
   db.query(`
     SELECT title, value, redeem_time
@@ -158,7 +229,7 @@ app.get('/redeem', (req, res) => {
 });
 
 // Redeem Item ==============================================
-app.post('/redeem', (req, res) => {
+app.post('/redeem',checkAuth, (req, res) => {
   var { username } = req.cookies;
   var { item } = req.body;
   db.query(
@@ -177,7 +248,7 @@ app.post('/redeem', (req, res) => {
 });
 
 // Export CSV
-app.get('/export', (_, res) => {
+app.get('/export',checkAuth, (_, res) => {
   db.query(`
     SELECT item.id AS id, title, value, redeem_time, username
     FROM redeem LEFT JOIN item ON redeem.item_id = item.id
@@ -223,6 +294,12 @@ var initSQL = `
     FOREIGN KEY (username) REFERENCES user(username),
     FOREIGN KEY (item_id) REFERENCES item(id)
   );
+  
+  DROP TRIGGER IF EXISTS delete_item_redeem;
+  CREATE TRIGGER delete_item_redeem
+  BEFORE DELETE ON item FOR EACH ROW BEGIN
+    DELETE FROM redeem WHERE item_id = OLD.id;
+  END;
   
   DROP FUNCTION IF EXISTS redeem_item;
   CREATE FUNCTION redeem_item(
